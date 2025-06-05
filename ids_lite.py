@@ -7,6 +7,11 @@ connection_tracker = defaultdict(list)
 PORT_SCAN_THRESHOLD = 20
 TIME_WINDOW = 10  # seconds
 
+def log_alert(ip):
+    with open("alerts.log", "a") as log_file:
+        timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        log_file.write(f"[{timestamp}] ALERT: Possible port scan detected from {ip}\n")
+
 def detect_port_scan(packet):
     if packet.haslayer(IP) and packet.haslayer(TCP):
         ip_src = packet[IP].src
@@ -26,6 +31,7 @@ def detect_port_scan(packet):
         unique_ports = set(port for port, _ in connection_tracker[ip_src])
         if len(unique_ports) > PORT_SCAN_THRESHOLD:
             print(f"[ALERT] Possible port scan detected from {ip_src}")
+            log_alert(ip_src)  # Log the alert to file
             connection_tracker[ip_src] = []  # Reset after alert
 
 print("🔍 IDS Lite is running. Press Ctrl+C to stop.")
